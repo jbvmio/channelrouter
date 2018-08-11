@@ -1,6 +1,8 @@
 package channelrouter
 
-import "sync"
+import (
+	"sync"
+)
 
 //ChannelRouter Here.
 type ChannelRouter struct {
@@ -65,6 +67,8 @@ func (cr *ChannelRouter) Route() {
 				if !cr.run {
 					return
 				}
+			} else {
+				break
 			}
 		}
 	}()
