@@ -28,8 +28,8 @@ func (cr *ChannelRouter) Send(k Key, i interface{}) {
 	//cr.Channels[k].Send(i)
 	cr.wg.Add(1)
 	p := Packet{
-		key:   k,
-		value: i,
+		header: k,
+		value:  i,
 	}
 	cr.ingress <- p
 	cr.wg.Wait()
@@ -39,7 +39,7 @@ func (cr *ChannelRouter) Send(k Key, i interface{}) {
 func (cr *ChannelRouter) Receive(k Key) Packet {
 	r, ok := cr.Channels[k].Receive()
 	p := Packet{
-		key: k,
+		header: k,
 	}
 	if !ok {
 		p.value = nil
@@ -57,7 +57,7 @@ func (cr *ChannelRouter) Route() {
 			if cr.run {
 				select {
 				case p := <-cr.ingress:
-					cr.Channels[p.key].Send(p.value)
+					cr.Channels[p.header].Send(p.value)
 					cr.wg.Done()
 				default:
 					cr.running = true

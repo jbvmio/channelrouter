@@ -10,8 +10,8 @@ import (
 
 //Packet Here.
 type Packet struct {
-	key   Key
-	value interface{}
+	header Key
+	value  interface{}
 }
 
 //IsArray Here.
@@ -34,14 +34,14 @@ func (p Packet) Array() ([]Packet, error) {
 		fmt.Println("")
 		return []Packet{}, fmt.Errorf("this Packet does not contain an array")
 	}
-	key := p.key
+	key := p.header
 	var packets []Packet
 	s := reflect.ValueOf(p.value)
 
 	for i := 0; i < s.Len(); i++ {
 		pkt := Packet{
-			key:   key,
-			value: s.Index(i),
+			header: key,
+			value:  s.Index(i),
 		}
 		packets = append(packets, pkt)
 	}
