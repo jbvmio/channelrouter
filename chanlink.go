@@ -1,9 +1,16 @@
 package channelrouter
 
+import (
+	"reflect"
+)
+
 //ChanLink Here.
 type ChanLink struct {
-	Key     Key
-	channel chan interface{}
+	Key      Key
+	channel  chan interface{}
+	refType  reflect.Type
+	sent     uint32
+	received uint32
 }
 
 //GetKey Here.
@@ -24,7 +31,11 @@ func (cl *ChanLink) Receive() (interface{}, bool) {
 	default:
 		return nil, false
 	}
+}
 
+//SetType Here.
+func (cl *ChanLink) SetType(t interface{}) {
+	cl.refType = reflect.TypeOf(t)
 }
 
 //NewChanLink Here.
@@ -35,5 +46,40 @@ func NewChanLink(buffer int) *ChanLink {
 	return &ChanLink{
 		Key:     newKey(),
 		channel: make(chan interface{}, buffer),
+		refType: nil,
 	}
 }
+
+func (cl *ChanLink) getAvailable() uint32 {
+	return cl.sent - cl.received
+}
+
+func (cl *ChanLink) resetCounters() bool {
+	if cl.getAvailable() == 0 {
+		cl.sent = 0
+		cl.received = 0
+		return true
+	}
+	return false
+}
+
+func (cl *ChanLink) testTypeEq(t interface{}) bool {
+	if reflect.TypeOf(t) == cl.refType {
+		return true
+	}
+	return false
+}
+
+func (cl *ChanLink) typeNil(t interface{}) bool {
+	if reflect.TypeOf(cl.refType) == nil {
+		return true
+	}
+	return false
+}
+
+//Ideas ^
+/*
+
+Send / Receive Counters
+
+*/

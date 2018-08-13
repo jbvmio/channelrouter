@@ -10,9 +10,15 @@ import (
 
 //Packet Here.
 type Packet struct {
+	err    error
 	header Key
+	tag    reflect.Type
 	value  interface{}
 }
+
+/* Additional Packet Ideas:
+// callback func
+*/
 
 //IsArray Here.
 func (p Packet) IsArray() bool {
