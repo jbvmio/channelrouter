@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	cr := channelrouter.NewChannelRouter(128)
+	cr := channelrouter.NewChannelRouter()
 	key1 := cr.AddChannel(32)
 	cr.Route()
 
@@ -43,7 +43,7 @@ import (
 )
 
 func main() {
-	cr := channelrouter.NewChannelRouter(128)
+	cr := channelrouter.NewChannelRouter()
 	//cr.Logger = log.New(os.Stdout, "[channelRouter] ", log.LstdFlags)
 	key1 := cr.AddChannel(32)
 	cr.Route()
@@ -93,7 +93,7 @@ import (
 )
 
 func main() {
-	cr := channelrouter.NewChannelRouter(128)
+	cr := channelrouter.NewChannelRouter()
 	intChan := cr.AddChannel(32)                  //Add the first channel
 	stringChan := cr.AddChannel(32)               //Add the second channel
 	cr.Route()
