@@ -1,8 +1,8 @@
 # ChannelRouter: Package for Go
 
-The channelrouter package enables quick creation and use of channels. Channels created with channelrouter are referenced by a unique Key which is used to "route" values to an appropriate underlying channel either directly or by broadcast.
+The ChannelRouter package enables quick creation and use of channels. Channels created with ChannelRouter are referenced by a unique Key which is used to "route" values to an appropriate underlying channel either directly or by broadcast.
 
-The goal of channelrouter is quick and easy channel setup, flexibility and additional features for increased functionality. 
+The goal of ChannelRouter is quick and easy channel setup, flexibility and additional features for increased functionality. 
 
 # Quick Example:
 
@@ -31,7 +31,7 @@ func main() {
 ```
 
 # Set Channel Type:
-For some added control, the channel type can be set enabling channelrouter to allow only the specified type to be sent. This is done by simply passing an empty value of the type you want to set on the channel.
+For some added control, the channel type can be set enabling ChannelRouter to allow only the specified type to be sent. This is done by simply passing an empty value of the type you want to set on the channel.
 ```
 package main
 
@@ -82,7 +82,7 @@ Value: 777 Type: string
 ```
 
 # Broadcasting, adding multiple channels:
-If you use channelrouter to send a broadcast, the type sent will be matched to all other channels that are set to the same type, as well as channels that have not been set at all, ie. <nil>
+If you use ChannelRouter to send a broadcast, the type sent will be matched to all other channels that are set to the same type, as well as channels that have not been set at all, ie. <nil>
 ```
 package main
 
