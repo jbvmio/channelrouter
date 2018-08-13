@@ -47,14 +47,14 @@ func (cr *ChannelRouter) Send(k Key, i interface{}) {
 			return
 		}
 	}
-	cr.wg.Add(1)
+	//cr.wg.Add(1)
 	p := Packet{
 		header: k,
 		value:  i,
 	}
 	cr.vog("Sending packet to ChannelRouter, destination:%v\n", k)
 	cr.ingress <- p
-	cr.wg.Wait()
+	//cr.wg.Wait()
 	cr.vog("%v", cr.statCheck(p.header))
 }
 
@@ -92,7 +92,7 @@ func (cr *ChannelRouter) Route() {
 					cr.Channels[p.header].Send(p.value)
 					cr.Channels[p.header].sent++
 					cr.vog("Packet sent\n")
-					cr.wg.Done()
+					//cr.wg.Done()
 				default:
 					cr.running = true
 				}
@@ -130,7 +130,7 @@ func (cr *ChannelRouter) GetStats(k Key) Stats {
 
 func (cr *ChannelRouter) statCheck(k Key) string {
 	sc := cr.GetStats(k)
-	return fmt.Sprintf("Status Check >> Sent:%v Received:%v Available:%v", sc.Sent, sc.Received, sc.Available)
+	return fmt.Sprintf("Stats:%v >> Sent:%v Received:%v Available:%v", k, sc.Sent, sc.Received, sc.Available)
 }
 
 //Available Here.
@@ -176,7 +176,10 @@ func (cr *ChannelRouter) Broadcast(i interface{}) {
 }
 
 //NewChannelRouter Here.
-func NewChannelRouter() *ChannelRouter {
+func NewChannelRouter(buffer int) *ChannelRouter {
+	if buffer < 1024 {
+		buffer = 1024
+	}
 	channels := make(map[Key]*ChanLink)
 	return &ChannelRouter{
 		ingress:  make(chan Packet, 1024),
