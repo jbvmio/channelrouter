@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-//ChannelRouter Here.
+//ChannelRouter type:
 type ChannelRouter struct {
 	ingress  chan Packet
 	run      bool
@@ -18,27 +18,41 @@ type ChannelRouter struct {
 	Logger *log.Logger
 }
 
-//AddChannel Here.
-func (cr *ChannelRouter) AddChannel(buffer int) Key {
-	cl := NewChanLink(buffer)
+// AddChannel adds a new underlying channel. A desired buffer size for the channel
+// can be passed here. (default 32)
+func (cr *ChannelRouter) AddChannel(buffer ...int) Key {
+	var b int
+	if len(buffer) < 1 || buffer[0] < 32 {
+		b = 32
+	} else {
+		b = buffer[0]
+	}
+	cl := NewChanLink(b)
 	cr.Channels[cl.Key] = cl
 	cr.vog("Adding new channel to ChannelRouter with key:%v\n", cl.Key)
 	return cl.Key
 }
 
-//SetType Here.
+// SetType sets the type desired for the underlying channel referenced by k.
 func (cr *ChannelRouter) SetType(k Key, t interface{}) {
 	cr.vog("Setting type:%T for channel:%v\n", t, k)
 	cr.Channels[k].refType = reflect.TypeOf(t)
 }
 
-//Stop Here.
+// GetType returns the current type set for the underlying channel referenced by k.
+func (cr *ChannelRouter) GetType(k Key) string {
+	return fmt.Sprint(cr.Channels[k].refType)
+}
+
+// Stop stops the ChannelRouter process.
 func (cr *ChannelRouter) Stop() {
 	cr.vog("Issuing Stop() to ChannelRouter\n")
 	cr.run = false
 }
 
-//Send Here.
+// Send sends i to the underlying channel referenced by k.
+// Send will drop packets if the value of i does not match the value
+// set for channel k unless the channel type is set to nil.
 func (cr *ChannelRouter) Send(k Key, i interface{}) {
 	cr.vog("Send request recieved")
 	if cr.Channels[k].refType != nil {
@@ -58,7 +72,9 @@ func (cr *ChannelRouter) Send(k Key, i interface{}) {
 	cr.vog("%v", cr.statCheck(p.header))
 }
 
-//Receive Here.
+// Receive returns a Packet from the underlying channel referenced by k.
+// If no Packet is available, an empty Packet is returned with the empty packet
+// error.
 func (cr *ChannelRouter) Receive(k Key) Packet {
 	cr.vog("Packet return requested for channel:%v\n", k)
 	r, ok := cr.Channels[k].Receive()
@@ -66,9 +82,16 @@ func (cr *ChannelRouter) Receive(k Key) Packet {
 		header: k,
 	}
 	if !ok {
-		cr.vog("Nothing available to recieve, returning nil")
-		p.value = nil
-		return p
+		//add retry:
+		//cr.vog("Nothing available to recieve, retyring once")
+		//time.Sleep(time.Millisecond * 300)
+		r, ok = cr.Channels[k].Receive()
+		if !ok {
+			cr.vog("Nothing available to recieve, returning nil")
+			p.Err = fmt.Errorf("empty packet: nothing available in channel, ")
+			p.value = nil
+			return p
+		}
 	}
 	p.value = r
 	cr.Channels[k].received++
@@ -76,7 +99,7 @@ func (cr *ChannelRouter) Receive(k Key) Packet {
 	return p
 }
 
-//Route Here.
+//Route starts the ChannelRouter process.
 func (cr *ChannelRouter) Route() {
 	cr.run = true
 	go func() {
@@ -112,14 +135,14 @@ func (cr *ChannelRouter) Route() {
 	}
 }
 
-//Stats Here.
+//Stats hold the packets Sent, Received and currently Available.
 type Stats struct {
 	Sent      uint32
 	Received  uint32
 	Available uint32
 }
 
-//GetStats Here.
+//GetStats returns the Stats type for the channel referenced by k.
 func (cr *ChannelRouter) GetStats(k Key) Stats {
 	return Stats{
 		Sent:      cr.Channels[k].sent,
@@ -133,7 +156,7 @@ func (cr *ChannelRouter) statCheck(k Key) string {
 	return fmt.Sprintf("Stats:%v >> Sent:%v Received:%v Available:%v", k, sc.Sent, sc.Received, sc.Available)
 }
 
-//Available Here.
+//Available returns the number of packets currently available in the channel specified by k.
 func (cr *ChannelRouter) Available(k Key) uint32 {
 	cr.vog("Getting number of outstanding packets available for channel:%v\n", k)
 	return cr.Channels[k].getAvailable()
@@ -161,7 +184,10 @@ func (cr *ChannelRouter) matchChannels(i interface{}) []Key {
 	return keys
 }
 
-//Broadcast Here.
+// Broadcast sends to all underlying channels in ChannelRouter.
+// If the underlying channel has a set type which doesn't match the broadcast type,
+// the value will not be sent to that channel. If the underlying channel type has
+// not been set, or set to nil, the value will be passed.
 func (cr *ChannelRouter) Broadcast(i interface{}) {
 	keys := cr.matchChannels(i)
 	if len(keys) < 1 {
@@ -175,19 +201,21 @@ func (cr *ChannelRouter) Broadcast(i interface{}) {
 	}
 }
 
-//NewChannelRouter Here.
-func NewChannelRouter(buffer int) *ChannelRouter {
-	if buffer < 1024 {
-		buffer = 1024
+// NewChannelRouter creates and returns a new ChannelRouter.
+func NewChannelRouter(buffer ...int) *ChannelRouter {
+	var b int
+	if len(buffer) < 1 || buffer[0] < 1024 {
+		b = 1024
+	} else {
+		b = buffer[0]
 	}
 	channels := make(map[Key]*ChanLink)
 	return &ChannelRouter{
-		ingress:  make(chan Packet, 1024),
+		ingress:  make(chan Packet, b),
 		Channels: channels,
 	}
 }
 
-//Stop Here.
 func (cr *ChannelRouter) vog(f string, a ...interface{}) {
 	if cr.Logger != nil {
 		cr.Logger.Printf(f, a...)
